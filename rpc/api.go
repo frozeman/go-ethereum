@@ -202,6 +202,23 @@ func (api *EthereumApi) GetRequestReply(req *RpcRequest, reply *interface{}) err
 		} else {
 			*reply = newHexData(common.FromHex(v))
 		}
+	case "eth_estimateGas":
+		args := new(CallArgs)
+		if err := json.Unmarshal(req.Params, &args); err != nil {
+			return err
+		}
+
+		// this need to return the gas used instead of bytes
+		v, err := api.xethAtStateNum(-1).Call(args.From, args.To, args.Value.String(), args.Gas.String(), args.GasPrice.String(), args.Data)
+		if err != nil {
+			return err
+		}
+
+		if v == "0x0" {
+			*reply = nil
+		} else {
+			*reply = newHexNum(big.NewInt(v).Bytes())
+		}
 	case "eth_flush":
 		return NewNotImplementedError(req.Method)
 	case "eth_getBlockByHash":
